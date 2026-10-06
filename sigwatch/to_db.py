@@ -98,6 +98,17 @@ def main():
              'snapshot_unknown': run.get('snapshot_unknown', 0),
              'last_events': run.get('events', [])[-50:] if not a.backfill else []}
     json.dump(state, open(os.path.join(a.out_dir, 'sigwatch', 'state.json'), 'w'))
+    # Public file for the page (no sign-in needed): state + Safes + last 30 day documents
+    days = {}
+    for f in glob.glob(os.path.join(a.prev_dir, 'sigwatch_days', '*.json')) + glob.glob(os.path.join(a.out_dir, 'sigwatch_days', '*.json')):
+        d = body(f); days[d['date']] = d  # files written this run come last and win
+    safes = {}
+    for f in glob.glob(os.path.join(a.out_dir, 'sigwatch_safes', '*.json')):
+        safes[os.path.basename(f)[:-5]] = body(f).get('rows', [])
+    pub = {k: v for k, v in state.items()}
+    pub.update({'safes': safes, 'days': [days[k] for k in sorted(days, reverse=True)[:30]]})
+    os.makedirs(os.path.join(a.out_dir, 'public'), exist_ok=True)
+    json.dump(pub, open(os.path.join(a.out_dir, 'public', 'sigwatch.json'), 'w'), separators=(',', ':'))
     print(json.dumps({'safes_total': total, 'day_docs': sorted(by_day), 'events': len(run.get('events', []))}))
 
 if __name__ == '__main__':
