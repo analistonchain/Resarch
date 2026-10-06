@@ -37,6 +37,8 @@ def main():
     ap.add_argument('--out', required=True)
     a = ap.parse_args()
     cache = json.load(open(a.cache)) if os.path.exists(a.cache) else {'checked': {}, 'deposit': []}
+    if 'checked' not in cache and isinstance(cache.get('data'), dict):  # file saved by an ArtifactData read
+        cache = cache['data']
     checked, deposit = cache.get('checked', {}), set(cache.get('deposit', []))
     rows, new_lookups = {}, 0
     for spec in a.entity:
