@@ -14,13 +14,13 @@ Inputs : --wallets  JSON [{"a": addr, "g": group}] (deposit addresses already re
          --prev     previous Safe snapshot JSON ({} or missing on the first run)
 Outputs: --out      JSON with events, new snapshot and run stats
 
-Keys are read from ~/.config/nodereal_url. Nothing is printed that contains keys.
+The NodeReal URL is read from $NODEREAL_URL, else ~/.config/nodereal_url. Nothing is printed that contains keys.
 """
 import argparse, json, os, sys, time, urllib.request, urllib.error
 from concurrent.futures import ThreadPoolExecutor
 from Crypto.Hash import keccak
 
-RPC = open(os.path.expanduser('~/.config/nodereal_url')).read().strip()
+RPC = (os.environ.get('NODEREAL_URL') or open(os.path.expanduser('~/.config/nodereal_url')).read()).strip()
 ZERO32 = '0x' + '0' * 64
 
 def k256(s):

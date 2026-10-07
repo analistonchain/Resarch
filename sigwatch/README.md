@@ -11,7 +11,7 @@ What it looks for:
 
 No wallet list, entity id or key lives in this folder. The list comes from Arkham entities at run time
 (`wallets.py`), exchange deposit addresses are dropped using Arkham labels (only new addresses cost a
-label lookup), and keys are read from `~/.config/`.
+label lookup), and keys are read from the `NODEREAL_URL` / `ARKHAM_KEY` environment variables, else from `~/.config/`.
 
 ## One run
 

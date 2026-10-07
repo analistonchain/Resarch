@@ -6,11 +6,11 @@
 
 cache.json (kept between runs): {"checked": {addr: label}, "deposit": [addr, ...]}
 Only addresses not yet in "checked" cost an Arkham label lookup.
-The Arkham key is read from ~/.config/arkham_key and never printed.
+The Arkham key is read from $ARKHAM_KEY, else ~/.config/arkham_key, and never printed.
 """
 import argparse, json, os, time, urllib.request, urllib.error
 
-K = open(os.path.expanduser('~/.config/arkham_key')).read().strip()
+K = (os.environ.get('ARKHAM_KEY') or open(os.path.expanduser('~/.config/arkham_key')).read()).strip()
 
 def ark(path):
     rq = urllib.request.Request('https://api.arkm.com' + path, headers={'API-Key': K, 'User-Agent': 'Mozilla/5.0'})
