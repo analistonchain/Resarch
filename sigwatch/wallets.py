@@ -6,14 +6,20 @@
 
 cache.json (kept between runs): {"checked": {addr: label}, "deposit": [addr, ...]}
 Only addresses not yet in "checked" cost an Arkham label lookup.
-The Arkham key is read from $ARKHAM_KEY, else ~/.config/arkham_key, and never printed.
+The Arkham key is read from $ARKHAM_KEY, else ~/.config/arkham_key, and never printed. With neither, requests go without the key\nheader, so a network secret on the environment (host api.arkm.com, header API-Key) can supply it.
 """
 import argparse, json, os, time, urllib.request, urllib.error
 
-K = (os.environ.get('ARKHAM_KEY') or open(os.path.expanduser('~/.config/arkham_key')).read()).strip()
+def _ark_key():
+    if os.environ.get('ARKHAM_KEY'):
+        return os.environ['ARKHAM_KEY'].strip()
+    f = os.path.expanduser('~/.config/arkham_key')
+    return open(f).read().strip() if os.path.exists(f) else None
+
+K = _ark_key()  # None: send no key header (an environment network secret for api.arkm.com can add it)
 
 def ark(path):
-    rq = urllib.request.Request('https://api.arkm.com' + path, headers={'API-Key': K, 'User-Agent': 'Mozilla/5.0'})
+    rq = urllib.request.Request('https://api.arkm.com' + path, headers=({'API-Key': K} if K else {}) | {'User-Agent': 'Mozilla/5.0'})
     for i in range(4):
         try:
             return json.load(urllib.request.urlopen(rq, timeout=60))

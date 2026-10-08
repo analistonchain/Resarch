@@ -14,13 +14,22 @@ Inputs : --wallets  JSON [{"a": addr, "g": group}] (deposit addresses already re
          --prev     previous Safe snapshot JSON ({} or missing on the first run)
 Outputs: --out      JSON with events, new snapshot and run stats
 
-The NodeReal URL is read from $NODEREAL_URL, else ~/.config/nodereal_url. Nothing is printed that contains keys.
+The NodeReal URL is read from $NODEREAL_URL, else ~/.config/nodereal_url (free public BSC RPCs refuse eth_getLogs without an address filter). Nothing is printed that contains keys.
 """
 import argparse, json, os, sys, time, urllib.request, urllib.error
 from concurrent.futures import ThreadPoolExecutor
 from Crypto.Hash import keccak
 
-RPC = (os.environ.get('NODEREAL_URL') or open(os.path.expanduser('~/.config/nodereal_url')).read()).strip()
+def _rpc_url():
+    if os.environ.get('NODEREAL_URL'):
+        return os.environ['NODEREAL_URL'].strip()
+    f = os.path.expanduser('~/.config/nodereal_url')
+    if os.path.exists(f):
+        return open(f).read().strip()
+    # publicnode and other free BSC RPCs reject eth_getLogs without an address filter, so a key is required
+    sys.exit('scan.py: set NODEREAL_URL (environment variable) or ~/.config/nodereal_url')
+
+RPC = _rpc_url()
 ZERO32 = '0x' + '0' * 64
 
 def k256(s):
@@ -44,7 +53,7 @@ def rpc(method, params, tries=5):
     body = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': method, 'params': params}).encode()
     for i in range(tries):
         try:
-            rq = urllib.request.Request(RPC, data=body, headers={'Content-Type': 'application/json'})
+            rq = urllib.request.Request(RPC, data=body, headers={'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'})
             j = json.load(urllib.request.urlopen(rq, timeout=90))
             if 'result' in j:
                 return j['result']
